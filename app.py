@@ -10,8 +10,8 @@ from io import BytesIO
 # ═══════════════════════════════════════════════════════════════
 
 st.set_page_config(
-    page_title="Roseni Catering | Andmete Tootlus",
-    page_icon="fork_and_knife",
+    page_title="Roseni Catering | Andmete Töötlus",
+    page_icon="🍴",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -117,32 +117,44 @@ st.markdown("""
 def transform_data(df):
     """Transformeerib Worksheet andmed Tulemus formaati"""
     
-    # Filtreeri valja subheading read
+    # Filtreeri välja subheading read
     df_filtered = df[df["is_subheading"] != 1].copy()
+    
+    # Säilita originaaljärjekord - lisa indeks veerg
+    df_filtered["_original_order"] = range(len(df_filtered))
     
     # Arvuta veerg C (amount x additional_amount)
     df_filtered["calc_c"] = df_filtered["amount"] * df_filtered["additional_amount"]
     
-    # Arvuta hindbuumile (hind enne allahindlust)
+    # Arvuta hindbuumile (hind pärast soodustusi)
+    # Loogika: kui line_discount=100%, siis hind=0
+    # Muidu: price - (price * line_discount/100) - (price * discount/100)
     def calc_hindbuumile(row):
-        if 0 < row["line_discount_percent"] < 100:
-            return row["price"] / (1 - row["line_discount_percent"]/100)
-        return row["price"]
+        price = row["price"]
+        line_disc = row["line_discount_percent"]
+        total_disc = row.get("discount", 0)
+        if pd.isna(total_disc):
+            total_disc = 0
+        
+        if line_disc == 100:
+            return 0
+        else:
+            return price - (price * line_disc / 100) - (price * total_disc / 100)
     
     df_filtered["hindbuumile"] = df_filtered.apply(calc_hindbuumile, axis=1)
     
-    # Sorteeri maksjate kaupa
-    df_filtered = df_filtered.sort_values("payer")
+    # EI SORTEERI - säilitame algandmete originaaljärjekorra!
+    # df_filtered = df_filtered.sort_values("payer")  # EEMALDATUD
     
-    # Loo valjund tuhjade ridadega maksjate vahel
+    # Loo väljund tühjade ridadega maksjate vahel
     result_rows = []
     current_payer = None
     columns = ["payer", "product_code", "calc_c", "product_name",
                "amount", "unit", "additional_amount",
-               "line_discount_percent", "hindbuumile", "price", "line_sum"]
+               "line_discount_percent", "hindbuumile", "price", "line_sum", "discount"]
     
     for _, row in df_filtered.iterrows():
-        if current_payer and current_payer != row["payer"]:
+        if current_payer is not None and current_payer != row["payer"]:
             result_rows.append({col: "" for col in columns})
         current_payer = row["payer"]
         result_rows.append({col: row.get(col, "") for col in columns})
@@ -150,7 +162,7 @@ def transform_data(df):
     return pd.DataFrame(result_rows)
 
 def create_summary_stats(df):
-    """Loob kokkuvoitva statistika"""
+    """Loob kokkuvõtva statistika"""
     stats = {}
     df_clean = df[df["payer"] != ""]
     stats["total_rows"] = len(df_clean)
@@ -168,33 +180,33 @@ def create_summary_stats(df):
 
 # Header
 st.markdown("<h1 class=\"main-header\">ROSENI CATERING</h1>", unsafe_allow_html=True)
-st.markdown("<p class=\"sub-header\">Andmete Transformatsioon ja Analuus</p>", unsafe_allow_html=True)
+st.markdown("<p class=\"sub-header\">Andmete Transformatsioon ja Analüüs</p>", unsafe_allow_html=True)
 st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
 
 # Sidebar
 with st.sidebar:
-    st.markdown("## ROSENI TORN")
+    st.markdown("## 🏰 ROSENI TORN")
     st.markdown("---")
-    st.markdown("### Seaded")
-    show_raw_data = st.checkbox("Naita algandmeid", value=False)
-    show_charts = st.checkbox("Naita graafikuid", value=True)
+    st.markdown("### ⚙️ Seaded")
+    show_raw_data = st.checkbox("Näita algandmeid", value=False)
+    show_charts = st.checkbox("Näita graafikuid", value=True)
     st.markdown("---")
-    st.markdown("### Juhised")
+    st.markdown("### 📋 Juhised")
     st.markdown("""
-    1. Lae ules Excel fail
+    1. Laadi üles Excel fail
     2. Vali Worksheet leht
     3. Vajuta Transformeeri
-    4. Lae tulemus alla
+    4. Laadi tulemus alla
     """)
     st.markdown("---")
-    st.markdown("*Roseni Majad OU*")
+    st.markdown("*Roseni Majad OÜ*")
 
-# Faili uleslaadimine
-st.markdown("### Lae ules Excel fail")
+# Faili üleslaadimine
+st.markdown("### 📁 Laadi üles Excel fail")
 uploaded_file = st.file_uploader(
     "Vali fail (.xlsx)",
     type=["xlsx", "xls"],
-    help="Lae ules Excel fail, mis sisaldab Worksheet lehte"
+    help="Laadi üles Excel fail, mis sisaldab Worksheet lehte"
 )
 
 if uploaded_file is not None:
@@ -202,23 +214,23 @@ if uploaded_file is not None:
         excel_file = pd.ExcelFile(uploaded_file)
         sheet_names = excel_file.sheet_names
         
-        st.success("Fail laetud! Leitud " + str(len(sheet_names)) + " lehte.")
+        st.success(f"✅ Fail laetud! Leitud {len(sheet_names)} lehte.")
         
         selected_sheet = st.selectbox("Vali leht:", sheet_names, index=0)
         df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
         
         if show_raw_data:
-            st.markdown("### Algandmed")
+            st.markdown("### 📊 Algandmed")
             st.dataframe(df.head(20), use_container_width=True)
         
         st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            transform_button = st.button("TRANSFORMEERI ANDMED", use_container_width=True)
+            transform_button = st.button("✨ TRANSFORMEERI ANDMED", use_container_width=True)
         
         if transform_button:
-            with st.spinner("Tootlen andmeid..."):
+            with st.spinner("Töötlen andmeid..."):
                 required_cols = ["is_subheading", "payer", "product_code", "product_name",
                                  "amount", "unit", "additional_amount",
                                  "line_discount_percent", "price", "line_sum"]
@@ -226,41 +238,36 @@ if uploaded_file is not None:
                 missing_cols = [col for col in required_cols if col not in df.columns]
                 
                 if missing_cols:
-                    st.error("Puuduvad veerud: " + str(missing_cols))
+                    st.error(f"❌ Puuduvad veerud: {missing_cols}")
                 else:
                     result_df = transform_data(df)
                     stats = create_summary_stats(result_df)
                     
                     # Statistika
-                    st.markdown("### Kokkuvote")
+                    st.markdown("### 📈 Kokkuvõte")
                     col1, col2, col3, col4 = st.columns(4)
-                    
-                    total_rows_val = str(stats["total_rows"])
-                    unique_payers_val = str(stats["unique_payers"])
-                    unique_products_val = str(stats["unique_products"])
-                    total_sum_val = "EUR " + "{:,.2f}".format(stats["total_sum"])
                     
                     with col1:
                         st.markdown(
-                            "<div class=\"stat-card\"><div class=\"stat-number\">" + total_rows_val + "</div><div class=\"stat-label\">Tooterida</div></div>",
+                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['total_rows']}</div><div class=\"stat-label\">Tooterida</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col2:
                         st.markdown(
-                            "<div class=\"stat-card\"><div class=\"stat-number\">" + unique_payers_val + "</div><div class=\"stat-label\">Maksjat</div></div>",
+                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['unique_payers']}</div><div class=\"stat-label\">Maksjat</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col3:
                         st.markdown(
-                            "<div class=\"stat-card\"><div class=\"stat-number\">" + unique_products_val + "</div><div class=\"stat-label\">Toodet</div></div>",
+                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['unique_products']}</div><div class=\"stat-label\">Toodet</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col4:
                         st.markdown(
-                            "<div class=\"stat-card\"><div class=\"stat-number\">" + total_sum_val + "</div><div class=\"stat-label\">Kogusumma</div></div>",
+                            f"<div class=\"stat-card\"><div class=\"stat-number\">€{stats['total_sum']:,.2f}</div><div class=\"stat-label\">Kogusumma</div></div>",
                             unsafe_allow_html=True
                         )
                     
@@ -268,7 +275,7 @@ if uploaded_file is not None:
                     
                     # Graafikud
                     if show_charts:
-                        st.markdown("### Analuus")
+                        st.markdown("### 📊 Analüüs")
                         
                         df_clean = result_df[result_df["payer"] != ""].copy()
                         df_clean["line_sum"] = pd.to_numeric(df_clean["line_sum"], errors="coerce")
@@ -307,7 +314,7 @@ if uploaded_file is not None:
                     st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
                     
                     # Tabel
-                    st.markdown("### Transformeeritud Andmed")
+                    st.markdown("### 📋 Transformeeritud Andmed")
                     st.dataframe(result_df, use_container_width=True, height=400)
                     
                     # Download
@@ -318,7 +325,7 @@ if uploaded_file is not None:
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         st.download_button(
-                            label="LAE TULEMUS ALLA",
+                            label="⬇️ LAADI TULEMUS ALLA",
                             data=output.getvalue(),
                             file_name="roseni_tulemus.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -326,35 +333,35 @@ if uploaded_file is not None:
                         )
     
     except Exception as e:
-        st.error("Viga: " + str(e))
+        st.error(f"❌ Viga: {str(e)}")
 
 else:
-    st.info("Lae ules Excel fail alustamiseks")
+    st.info("👆 Laadi üles Excel fail alustamiseks")
     
-    st.markdown("### Mida see rakendus teeb?")
+    st.markdown("### ℹ️ Mida see rakendus teeb?")
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">1</div><div class=\"stat-label\">Transformeerimine</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Filtreerib ja arvutab vaartused</p></div>",
+            "<div class=\"stat-card\"><div class=\"stat-number\">1</div><div class=\"stat-label\">Transformeerimine</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Filtreerib ja arvutab väärtused</p></div>",
             unsafe_allow_html=True
         )
     
     with col2:
         st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">2</div><div class=\"stat-label\">Analuus</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Grupeerib ja loob graafikud</p></div>",
+            "<div class=\"stat-card\"><div class=\"stat-number\">2</div><div class=\"stat-label\">Analüüs</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Grupeerib ja loob graafikud</p></div>",
             unsafe_allow_html=True
         )
     
     with col3:
         st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">3</div><div class=\"stat-label\">Eksport</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Lae tulemus alla</p></div>",
+            "<div class=\"stat-card\"><div class=\"stat-number\">3</div><div class=\"stat-label\">Eksport</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Laadi tulemus alla</p></div>",
             unsafe_allow_html=True
         )
 
 # Footer
 st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
 st.markdown(
-    "<p style=\"text-align:center; color:#c9a961; font-size:0.9rem;\">Roseni Catering | Parimad emotsioonid ja horgud maitsed<br><span style=\"color:#666;\">2024 Roseni Torn</span></p>",
+    "<p style=\"text-align:center; color:#c9a961; font-size:0.9rem;\">🍴 Roseni Catering | Parimad emotsioonid ja hõrgud maitsed<br><span style=\"color:#666;\">© 2024 Roseni Torn</span></p>",
     unsafe_allow_html=True
 )
