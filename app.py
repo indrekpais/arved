@@ -247,7 +247,12 @@ def transform_data(df):
     
     for _, row in df_filtered.iterrows():
         if current_payer is not None and current_payer != row["payer"]:
-            result_rows.append({col: "" for col in columns})
+            # --- UUS OSA ALGAB ---
+            empty_row = {col: "" for col in columns}
+            empty_row["payer"] = "-"
+            result_rows.append(empty_row)
+            # --- UUS OSA LÕPP ---
+            
         current_payer = row["payer"]
         result_rows.append({col: row.get(col, "") for col in columns})
     
