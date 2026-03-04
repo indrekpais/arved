@@ -261,14 +261,24 @@ def transform_data(df):
 def create_summary_stats(df):
     """Loob kokkuvõtva statistika"""
     stats = {}
-    df_clean = df[df["payer"] != ""]
+    
+    # 1. Filtreerime välja read, mis pole päris andmed (Sinu lisatud "-" read)
+    df_clean = df[df["payer"] != "-"].copy()
+    
     stats["total_rows"] = len(df_clean)
     stats["unique_payers"] = df_clean["payer"].nunique()
     stats["unique_products"] = df_clean["product_code"].nunique()
+    
     try:
-        stats["total_sum"] = df_clean["line_sum"].astype(float).sum()
+        # 2. PÕHILINE PARANDUS: To_numeric koos errors='coerce' 
+        # muudab tühjad stringid "" ja muud vead NaN-iks (tühimikuks)
+        line_sums = pd.to_numeric(df_clean["line_sum"], errors='coerce')
+        
+        # 3. Sum() ignoreerib NaN väärtusi automaatselt
+        stats["total_sum"] = line_sums.sum()
     except:
         stats["total_sum"] = 0
+        
     return stats
 
 def format_excel_output(writer, result_df):
