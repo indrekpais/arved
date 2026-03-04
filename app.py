@@ -1,111 +1,208 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
 from io import BytesIO
+from openpyxl.styles import Alignment
+from openpyxl.utils import get_column_letter
 
 # ═══════════════════════════════════════════════════════════════
-# ROSENI TORN STIILIS TEEMA
+# ROSENI CATERING - TRANSFORMER
 # ═══════════════════════════════════════════════════════════════
 
 st.set_page_config(
-    page_title="Roseni Catering | Andmete Töötlus",
+    page_title="Transformer - Scoro to Buum",
     page_icon="🍴",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS - Roseni Torn stiil
+# Custom CSS - Roseni Catering stiil (must taust, kuldne aktsent)
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@300;400;500;600&display=swap');
+    
     :root {
-        --roseni-dark: #1a1a2e;
-        --roseni-darker: #0f0f1a;
-        --roseni-gold: #c9a961;
-        --roseni-gold-light: #e5d4a1;
-        --roseni-cream: #f5f0e6;
+        --roseni-black: #0a0a0a;
+        --roseni-dark: #1a1a1a;
+        --roseni-gold: #c4a265;
+        --roseni-gold-light: #d4b88a;
+        --roseni-white: #ffffff;
+        --roseni-gray: #888888;
     }
     
     .stApp {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f1a 100%);
+        background-color: #0a0a0a;
     }
     
-    .main-header {
-        background: linear-gradient(90deg, #c9a961, #e5d4a1, #c9a961);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 3rem;
-        font-weight: 700;
-        text-align: center;
-        padding: 1rem 0;
-        letter-spacing: 3px;
+    /* Header area */
+    header[data-testid="stHeader"] {
+        background-color: #0a0a0a;
     }
     
-    .sub-header {
-        color: #e5d4a1;
+    /* Logo container */
+    .logo-container {
         text-align: center;
-        font-size: 1.2rem;
-        margin-bottom: 2rem;
-        font-style: italic;
-    }
-    
-    .stat-card {
-        background: linear-gradient(145deg, #1e1e3a, #252550);
-        border: 1px solid #c9a961;
-        border-radius: 15px;
-        padding: 1.5rem;
-        text-align: center;
-        box-shadow: 0 8px 32px rgba(201, 169, 97, 0.15);
+        padding: 2rem 0;
         margin-bottom: 1rem;
     }
     
+    .logo-container img {
+        max-width: 280px;
+        height: auto;
+    }
+    
+    /* Main title */
+    .main-title {
+        font-family: 'Cormorant Garamond', serif;
+        color: #c4a265;
+        font-size: 2.5rem;
+        font-weight: 600;
+        text-align: center;
+        letter-spacing: 4px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .sub-title {
+        font-family: 'Montserrat', sans-serif;
+        color: #888888;
+        font-size: 1rem;
+        text-align: center;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+    }
+    
+    /* Gold divider */
+    .gold-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #c4a265, transparent);
+        margin: 2rem auto;
+        max-width: 600px;
+    }
+    
+    /* Stat cards */
+    .stat-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: border-color 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        border-color: #c4a265;
+    }
+    
     .stat-number {
+        font-family: 'Cormorant Garamond', serif;
         font-size: 2.5rem;
         font-weight: 700;
-        color: #c9a961;
+        color: #c4a265;
     }
     
     .stat-label {
-        color: #e5d4a1;
-        font-size: 0.9rem;
+        font-family: 'Montserrat', sans-serif;
+        color: #888888;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 2px;
+        margin-top: 0.5rem;
     }
     
+    /* Buttons */
     .stButton > button {
-        background: linear-gradient(135deg, #c9a961 0%, #a88c4a 100%);
-        color: #1a1a2e;
-        border: none;
-        border-radius: 25px;
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        letter-spacing: 1px;
+        background: transparent;
+        color: #c4a265;
+        border: 1px solid #c4a265;
+        border-radius: 0;
+        padding: 0.75rem 2.5rem;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 500;
+        letter-spacing: 2px;
+        text-transform: uppercase;
         transition: all 0.3s ease;
     }
     
     .stButton > button:hover {
-        background: linear-gradient(135deg, #e5d4a1 0%, #c9a961 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(201, 169, 97, 0.4);
+        background: #c4a265;
+        color: #0a0a0a;
+        border-color: #c4a265;
     }
     
+    /* File uploader */
     [data-testid="stFileUploader"] {
-        background: rgba(201, 169, 97, 0.1);
-        border: 2px dashed #c9a961;
-        border-radius: 15px;
+        background: #1a1a1a;
+        border: 1px dashed #333333;
+        border-radius: 8px;
         padding: 1rem;
     }
     
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
-        border-right: 1px solid #c9a961;
+    [data-testid="stFileUploader"]:hover {
+        border-color: #c4a265;
     }
     
-    .gold-divider {
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #c9a961, transparent);
-        margin: 2rem 0;
+    /* Download button */
+    .stDownloadButton > button {
+        background: #c4a265;
+        color: #0a0a0a;
+        border: none;
+        border-radius: 0;
+        padding: 0.75rem 2.5rem;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    
+    .stDownloadButton > button:hover {
+        background: #d4b88a;
+        color: #0a0a0a;
+    }
+    
+    /* Dataframe styling */
+    .stDataFrame {
+        background: #1a1a1a;
+        border-radius: 8px;
+    }
+    
+    /* Info/Success/Error messages */
+    .stAlert {
+        background: #1a1a1a;
+        border-radius: 8px;
+    }
+    
+    /* Section headers */
+    .section-header {
+        font-family: 'Montserrat', sans-serif;
+        color: #ffffff;
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #0a0a0a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #333333;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #c4a265;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -115,20 +212,18 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════
 
 def transform_data(df):
-    """Transformeerib Worksheet andmed Tulemus formaati"""
+    """Transformeerib Scoro andmed Buum formaati"""
     
     # Filtreeri välja subheading read
     df_filtered = df[df["is_subheading"] != 1].copy()
     
-    # Säilita originaaljärjekord - lisa indeks veerg
+    # Säilita originaaljärjekord
     df_filtered["_original_order"] = range(len(df_filtered))
     
     # Arvuta veerg C (amount x additional_amount)
     df_filtered["calc_c"] = df_filtered["amount"] * df_filtered["additional_amount"]
     
     # Arvuta hindbuumile (hind pärast soodustusi)
-    # Loogika: kui line_discount=100%, siis hind=0
-    # Muidu: price - (price * line_discount/100) - (price * discount/100)
     def calc_hindbuumile(row):
         price = row["price"]
         line_disc = row["line_discount_percent"]
@@ -142,9 +237,6 @@ def transform_data(df):
             return price - (price * line_disc / 100) - (price * total_disc / 100)
     
     df_filtered["hindbuumile"] = df_filtered.apply(calc_hindbuumile, axis=1)
-    
-    # EI SORTEERI - säilitame algandmete originaaljärjekorra!
-    # df_filtered = df_filtered.sort_values("payer")  # EEMALDATUD
     
     # Loo väljund tühjade ridadega maksjate vahel
     result_rows = []
@@ -174,63 +266,70 @@ def create_summary_stats(df):
         stats["total_sum"] = 0
     return stats
 
+def format_excel_output(writer, result_df):
+    """Formaadib Excel väljundfaili - paremale joondus ja veeru laiused"""
+    workbook = writer.book
+    worksheet = writer.sheets["Tulemus"]
+    
+    # Arvuta iga veeru max laius ja joonda paremale
+    for col_idx, column in enumerate(result_df.columns, 1):
+        max_length = len(str(column))
+        
+        # Käi läbi kõik read selles veerus
+        for row_idx in range(2, len(result_df) + 2):
+            cell = worksheet.cell(row=row_idx, column=col_idx)
+            cell.alignment = Alignment(horizontal="right")
+            cell_value = str(cell.value) if cell.value else ""
+            max_length = max(max_length, len(cell_value))
+        
+        # Lisa natuke ruumi ja sea veeru laius
+        adjusted_width = max_length + 2
+        worksheet.column_dimensions[get_column_letter(col_idx)].width = adjusted_width
+        
+        # Joonda ka päis paremale
+        header_cell = worksheet.cell(row=1, column=col_idx)
+        header_cell.alignment = Alignment(horizontal="right")
+
 # ═══════════════════════════════════════════════════════════════
 # KASUTAJALIIDES
 # ═══════════════════════════════════════════════════════════════
 
-# Header
-st.markdown("<h1 class=\"main-header\">ROSENI CATERING</h1>", unsafe_allow_html=True)
-st.markdown("<p class=\"sub-header\">Andmete Transformatsioon ja Analüüs</p>", unsafe_allow_html=True)
-st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
+# Logo
+st.markdown("""
+<div class="logo-container">
+    <img src="https://rosenievents.ee/wp-content/uploads/2025/03/catering_logo.png" alt="Roseni Catering">
+</div>
+""", unsafe_allow_html=True)
 
-# Sidebar
-with st.sidebar:
-    st.markdown("## 🏰 ROSENI TORN")
-    st.markdown("---")
-    st.markdown("### ⚙️ Seaded")
-    show_raw_data = st.checkbox("Näita algandmeid", value=False)
-    show_charts = st.checkbox("Näita graafikuid", value=True)
-    st.markdown("---")
-    st.markdown("### 📋 Juhised")
-    st.markdown("""
-    1. Laadi üles Excel fail
-    2. Vali Worksheet leht
-    3. Vajuta Transformeeri
-    4. Laadi tulemus alla
-    """)
-    st.markdown("---")
-    st.markdown("*Roseni Majad OÜ*")
+# Title
+st.markdown("<h1 class='main-title'>TRANSFORMER</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-title'>Scoro to Buum</p>", unsafe_allow_html=True)
+st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
-# Faili üleslaadimine
-st.markdown("### 📁 Laadi üles Excel fail")
+# File upload
+st.markdown("<p class='section-header'>📁 Laadi üles Excel fail</p>", unsafe_allow_html=True)
 uploaded_file = st.file_uploader(
     "Vali fail (.xlsx)",
     type=["xlsx", "xls"],
-    help="Laadi üles Excel fail, mis sisaldab Worksheet lehte"
+    label_visibility="collapsed"
 )
 
 if uploaded_file is not None:
     try:
-        excel_file = pd.ExcelFile(uploaded_file)
-        sheet_names = excel_file.sheet_names
+        # Loe esimene leht automaatselt
+        df = pd.read_excel(uploaded_file, sheet_name=0)
         
-        st.success(f"✅ Fail laetud! Leitud {len(sheet_names)} lehte.")
+        st.success(f"✓ Fail laetud: {len(df)} rida")
         
-        selected_sheet = st.selectbox("Vali leht:", sheet_names, index=0)
-        df = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
+        st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
         
-        if show_raw_data:
-            st.markdown("### 📊 Algandmed")
-            st.dataframe(df.head(20), use_container_width=True)
-        
-        st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
-        
+        # Transform button
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            transform_button = st.button("✨ TRANSFORMEERI ANDMED", use_container_width=True)
+            transform_button = st.button("TRANSFORMEERI", use_container_width=True)
         
         if transform_button:
-            with st.spinner("Töötlen andmeid..."):
+            with st.spinner("Töötlen..."):
                 required_cols = ["is_subheading", "payer", "product_code", "product_name",
                                  "amount", "unit", "additional_amount",
                                  "line_discount_percent", "price", "line_sum"]
@@ -238,130 +337,82 @@ if uploaded_file is not None:
                 missing_cols = [col for col in required_cols if col not in df.columns]
                 
                 if missing_cols:
-                    st.error(f"❌ Puuduvad veerud: {missing_cols}")
+                    st.error(f"Puuduvad veerud: {missing_cols}")
                 else:
                     result_df = transform_data(df)
                     stats = create_summary_stats(result_df)
                     
-                    # Statistika
-                    st.markdown("### 📈 Kokkuvõte")
+                    # Statistics
+                    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
+                    
                     col1, col2, col3, col4 = st.columns(4)
                     
                     with col1:
                         st.markdown(
-                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['total_rows']}</div><div class=\"stat-label\">Tooterida</div></div>",
+                            f"<div class='stat-card'><div class='stat-number'>{stats['total_rows']}</div><div class='stat-label'>Tooterida</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col2:
                         st.markdown(
-                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['unique_payers']}</div><div class=\"stat-label\">Maksjat</div></div>",
+                            f"<div class='stat-card'><div class='stat-number'>{stats['unique_payers']}</div><div class='stat-label'>Maksjat</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col3:
                         st.markdown(
-                            f"<div class=\"stat-card\"><div class=\"stat-number\">{stats['unique_products']}</div><div class=\"stat-label\">Toodet</div></div>",
+                            f"<div class='stat-card'><div class='stat-number'>{stats['unique_products']}</div><div class='stat-label'>Toodet</div></div>",
                             unsafe_allow_html=True
                         )
                     
                     with col4:
                         st.markdown(
-                            f"<div class=\"stat-card\"><div class=\"stat-number\">€{stats['total_sum']:,.2f}</div><div class=\"stat-label\">Kogusumma</div></div>",
+                            f"<div class='stat-card'><div class='stat-number'>€{stats['total_sum']:,.0f}</div><div class='stat-label'>Kogusumma</div></div>",
                             unsafe_allow_html=True
                         )
                     
-                    st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
+                    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
                     
-                    # Graafikud
-                    if show_charts:
-                        st.markdown("### 📊 Analüüs")
-                        
-                        df_clean = result_df[result_df["payer"] != ""].copy()
-                        df_clean["line_sum"] = pd.to_numeric(df_clean["line_sum"], errors="coerce")
-                        
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            payer_sum = df_clean.groupby("payer")["line_sum"].sum().reset_index()
-                            payer_sum = payer_sum.sort_values("line_sum", ascending=True)
-                            
-                            fig1 = px.bar(payer_sum, x="line_sum", y="payer",
-                                          orientation="h",
-                                          title="Summa maksjate kaupa",
-                                          color="line_sum",
-                                          color_continuous_scale=["#1a1a2e", "#c9a961"])
-                            fig1.update_layout(
-                                plot_bgcolor="rgba(0,0,0,0)",
-                                paper_bgcolor="rgba(0,0,0,0)",
-                                font_color="#e5d4a1",
-                                showlegend=False
-                            )
-                            st.plotly_chart(fig1, use_container_width=True)
-                        
-                        with col2:
-                            fig2 = px.pie(payer_sum, values="line_sum", names="payer",
-                                          title="Osakaal maksjate kaupa",
-                                          color_discrete_sequence=["#c9a961", "#a88c4a", "#e5d4a1",
-                                                                    "#8b7355", "#d4b896", "#6b5344"])
-                            fig2.update_layout(
-                                plot_bgcolor="rgba(0,0,0,0)",
-                                paper_bgcolor="rgba(0,0,0,0)",
-                                font_color="#e5d4a1"
-                            )
-                            st.plotly_chart(fig2, use_container_width=True)
-                    
-                    st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
-                    
-                    # Tabel
-                    st.markdown("### 📋 Transformeeritud Andmed")
+                    # Data table
+                    st.markdown("<p class='section-header'>📋 Transformeeritud andmed</p>", unsafe_allow_html=True)
                     st.dataframe(result_df, use_container_width=True, height=400)
                     
-                    # Download
+                    # Download - formaaditud Excel
                     output = BytesIO()
                     with pd.ExcelWriter(output, engine="openpyxl") as writer:
                         result_df.to_excel(writer, sheet_name="Tulemus", index=False)
+                        format_excel_output(writer, result_df)
+                    
+                    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
                     
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         st.download_button(
-                            label="⬇️ LAADI TULEMUS ALLA",
+                            label="LAADI ALLA",
                             data=output.getvalue(),
-                            file_name="roseni_tulemus.xlsx",
+                            file_name="arve buumi.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             use_container_width=True
                         )
     
     except Exception as e:
-        st.error(f"❌ Viga: {str(e)}")
+        st.error(f"Viga: {str(e)}")
 
 else:
-    st.info("👆 Laadi üles Excel fail alustamiseks")
-    
-    st.markdown("### ℹ️ Mida see rakendus teeb?")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">1</div><div class=\"stat-label\">Transformeerimine</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Filtreerib ja arvutab väärtused</p></div>",
-            unsafe_allow_html=True
-        )
-    
-    with col2:
-        st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">2</div><div class=\"stat-label\">Analüüs</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Grupeerib ja loob graafikud</p></div>",
-            unsafe_allow_html=True
-        )
-    
-    with col3:
-        st.markdown(
-            "<div class=\"stat-card\"><div class=\"stat-number\">3</div><div class=\"stat-label\">Eksport</div><p style=\"color:#a0a0a0;font-size:0.85rem;\">Laadi tulemus alla</p></div>",
-            unsafe_allow_html=True
-        )
+    # Welcome message
+    st.markdown("""
+    <div style="text-align: center; padding: 3rem 0;">
+        <p style="color: #888888; font-family: 'Montserrat', sans-serif; font-size: 1rem;">
+            Laadi üles Scoro eksport ja transformeeri see Buum formaati
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 # Footer
-st.markdown("<div class=\"gold-divider\"></div>", unsafe_allow_html=True)
-st.markdown(
-    "<p style=\"text-align:center; color:#c9a961; font-size:0.9rem;\">🍴 Roseni Catering | Parimad emotsioonid ja hõrgud maitsed<br><span style=\"color:#666;\">© 2024 Roseni Torn</span></p>",
-    unsafe_allow_html=True
-)
+st.markdown("""
+<div style="text-align: center; padding: 3rem 0; margin-top: 2rem;">
+    <p style="color: #333333; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; letter-spacing: 2px;">
+        ROSENI CATERING
+    </p>
+</div>
+""", unsafe_allow_html=True)
