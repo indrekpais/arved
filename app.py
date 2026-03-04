@@ -278,7 +278,7 @@ def format_excel_output(writer, result_df):
         # Käi läbi kõik read selles veerus
         for row_idx in range(2, len(result_df) + 2):
             cell = worksheet.cell(row=row_idx, column=col_idx)
-            cell.alignment = Alignment(horizontal="right")
+            cell.alignment = Alignment(horizontal="left")
             cell_value = str(cell.value) if cell.value else ""
             max_length = max(max_length, len(cell_value))
         
@@ -288,7 +288,7 @@ def format_excel_output(writer, result_df):
         
         # Joonda ka päis paremale
         header_cell = worksheet.cell(row=1, column=col_idx)
-        header_cell.alignment = Alignment(horizontal="right")
+        header_cell.alignment = Alignment(horizontal="left")
 
 # ═══════════════════════════════════════════════════════════════
 # KASUTAJALIIDES
