@@ -261,7 +261,7 @@ if uploaded_file is not None:
                     with col4:
                         st.markdown(f'''
                         <div class="stat-card">
-                            <div class="stat-number">€{stats['total_sum']:,.2f}</div>
+                            <div class="stat-number">EUR{stats['total_sum']:,.2f}</div>
                             <div class="stat-label">Kogusumma</div>
                         </div>
                         ''', unsafe_allow_html=True)
