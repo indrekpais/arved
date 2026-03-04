@@ -390,7 +390,7 @@ if uploaded_file is not None:
                         st.download_button(
                             label="LAADI ALLA",
                             data=output.getvalue(),
-                            file_name="arve buumi.xlsx",
+                            file_name="arve boomi.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                             use_container_width=True
                         )
