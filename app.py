@@ -259,12 +259,13 @@ if uploaded_file is not None:
                         ''', unsafe_allow_html=True)
                     
                     with col4:
-                        st.markdown(f'''
-                        <div class="stat-card">
-                            <div class="stat-number">EUR{stats['total_sum']:,.2f}</div>
-                            <div class="stat-label">Kogusumma</div>
-                        </div>
-                        ''', unsafe_allow_html=True)
+    total_sum_str = f"EUR {stats['total_sum']:,.2f}"
+    st.markdown(f'''
+    <div class="stat-card">
+        <div class="stat-number">{total_sum_str}</div>
+        <div class="stat-label">Kogusumma</div>
+    </div>
+    ''', unsafe_allow_html=True)
                     
                     st.markdown('<div class="gold-divider"></div>', unsafe_allow_html=True)
                     
