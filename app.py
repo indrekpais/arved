@@ -325,7 +325,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title
-st.markdown(<h1 class='main-title'>TRANSFORMER</h1>"", unsafe_allow_html=True)"
+st.markdown(<h1 class='main-title'>TRANSFORMER</h1>", unsafe_allow_html=True)"
 st.markdown("<p class='sub-title'>Scoro to Buum</p>", unsafe_allow_html=True)
 st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
