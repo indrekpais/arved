@@ -212,7 +212,7 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════
 
 def transform_data(df):
-    ""Transformeerib Scoro andmed Buum formaati"""""""
+    ""Transformeerib Scoro andmed Buum formaati""
     
     # Filtreeri välja subheading read
     df_filtered = df[df["is_subheading"] != 1].copy()
