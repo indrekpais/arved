@@ -212,7 +212,7 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════
 
 def transform_data(df):
-    """Transformeerib Scoro andmed Buum formaati"""
+    ""Transformeerib Scoro andmed Buum formaati"""""""
     
     # Filtreeri välja subheading read
     df_filtered = df[df["is_subheading"] != 1].copy()
@@ -228,13 +228,21 @@ def transform_data(df):
         price = row["price"]
         line_disc = row["line_discount_percent"]
         total_disc = row.get("discount", 0)
+        
+        # Käsitle NaN/tühjad väärtused
+        if pd.isna(line_disc):
+            line_disc = 0
         if pd.isna(total_disc):
             total_disc = 0
         
+        # Kui rea allahindlus on 100%, siis hind on 0
         if line_disc == 100:
             return 0
-        else:
-            return price - (price * line_disc / 100) - (price * total_disc / 100)
+        
+        # ÕIGE VALEM: Korrutamine järjestikku, mitte lahutamine paralleelselt
+        # 1. Esmalt rakenda rea-allahindlus (line_discount)
+        # 2. Seejärel rakenda üldine allahindlus (discount)
+        return price * (1 - line_disc / 100) * (1 - total_disc / 100)
     
     df_filtered["hindbuumile"] = df_filtered.apply(calc_hindbuumile, axis=1)
     
@@ -317,7 +325,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Title
-st.markdown("<h1 class='main-title'>TRANSFORMER</h1>", unsafe_allow_html=True)
+st.markdown(<h1 class='main-title'>TRANSFORMER</h1>"", unsafe_allow_html=True)"
 st.markdown("<p class='sub-title'>Scoro to Buum</p>", unsafe_allow_html=True)
 st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
 
@@ -431,3 +439,4 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+"
